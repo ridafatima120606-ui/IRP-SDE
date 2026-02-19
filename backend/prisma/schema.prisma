@@ -1,0 +1,491 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  reservations Reservation[]
+  orders       Order[]
+  waitlist     Waitlist[]
+  preferences  CustomerPreference?
+  moodPreference MoodPreference?
+  loyaltyPoints LoyaltyPoints?
+  feedback     Feedback[]
+  rewardRedemptions RewardRedemption[]
+  notifications Notification[]
+  notificationPreference NotificationPreference?
+
+  @@map("users")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  CHEF
+}
+
+// Customer Preference model
+model CustomerPreference {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  mood      String?  // Romantic, Family, Business Meeting, Birthday
+  dietaryRestrictions String[] @default([])
+  favoriteItems String[]
+  budgetRange String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("customer_preferences")
+}
+
+// Table model
+model Table {
+  id        String   @id @default(cuid())
+  tableNumber Int
+  capacity  Int
+  location  String?  // Window, Corner, Center, Private
+  tableType String?  // Regular, VIP, Window, Private
+  ambiance  String?  // Romantic, Family-friendly, Business, Casual
+  status    TableStatus @default(AVAILABLE)
+  qrCode    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  reservations Reservation[]
+
+  @@unique([tableNumber])
+  @@map("tables")
+}
+
+enum TableStatus {
+  AVAILABLE
+  RESERVED
+  OCCUPIED
+  MAINTENANCE
+}
+
+// Reservation model
+model Reservation {
+  id        String   @id @default(cuid())
+  userId    String
+  tableId   String?
+  reservationDate DateTime
+  reservationTime DateTime
+  guestCount Int
+  specialRequests String?
+  status    ReservationStatus @default(CONFIRMED)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  table Table? @relation(fields: [tableId], references: [id])
+
+  @@map("reservations")
+}
+
+enum ReservationStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+// Waitlist model
+model Waitlist {
+  id        String   @id @default(cuid())
+  userId    String
+  guestCount Int
+  preferredTime DateTime
+  priority  Int // Based on loyalty points and booking time
+  status    WaitlistStatus @default(WAITING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("waitlist")
+}
+
+enum WaitlistStatus {
+  WAITING
+  NOTIFIED
+  SEATED
+  CANCELLED
+}
+
+// Menu Item model
+model MenuItem {
+  id        String   @id @default(cuid())
+  name      String
+  description String?
+  price     Float
+  category  String
+  image     String?
+  prepTime  Int // in minutes
+  calories  Int?
+  isVegetarian Boolean @default(false)
+  isVegan   Boolean @default(false)
+  isLocalIngredient Boolean @default(false)
+  carbonFootprint Float? // in kg CO2
+  isAvailable Boolean @default(true)
+  
+  // Mood associations
+  moodTags  String[] @default([]) // Romantic, Family, Business, Birthday
+  suitableFor String[] @default([]) // Romantic Dinner, Family Meal, etc.
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  orderItems OrderItem[]
+  sustainability SustainabilityMetrics?
+  dynamicPrices DynamicPrice[]
+
+  @@map("menu_items")
+}
+
+// Mood model
+model Mood {
+  id          String   @id @default(cuid())
+  name        String   @unique // Romantic, Family, Business Meeting, Birthday
+  description String?
+  icon        String?  // Emoji or icon path
+  color       String?  // Color hex code
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("moods")
+}
+
+// Mood Preference model
+model MoodPreference {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  currentMood         String?
+  preferredTableType  String?  // Window, Corner, Center, Private
+  lightingPreference  String?  // Dim, Moderate, Bright
+  musicPreference     String?
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("mood_preferences")
+}
+
+// Sustainability Metrics model
+model SustainabilityMetrics {
+  id                  String   @id @default(cuid())
+  menuItemId          String   @unique
+  carbonFootprint     Float    // kg CO2
+  waterUsage          Float?   // liters
+  transportDistance   Int?     // km
+  isLocalIngredient   Boolean @default(false)
+  isOrganic           Boolean @default(false)
+  isVegan             Boolean @default(false)
+  isVegetarian        Boolean @default(false)
+  isSeasonal          Boolean @default(false)
+  packagingType       String?  // Recyclable, Compostable, etc.
+  sustainabilityScore Int @default(0) // 0-100 score
+  badges              String[] @default([]) // 🌱 Vegan, 🌍 Local, etc.
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@map("sustainability_metrics")
+}
+
+// Ingredient Source model
+model IngredientSource {
+  id            String   @id @default(cuid())
+  name          String
+  origin        String
+  distance      Int      // km from restaurant
+  isLocalSource Boolean
+  carbonFootprint Float
+  isOrganic     Boolean @default(false)
+  isFairTrade   Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("ingredient_sources")
+}
+
+// Order model
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  tableId   String?
+  orderStatus OrderStatus @default(CONFIRMED)
+  totalPrice Float @default(0)
+  taxAmount Float @default(0)
+  serviceCharge Float @default(0)
+  surcharge Float @default(0) // Peak hour surcharge
+  specialInstructions String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items OrderItem[]
+  payment Payment?
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  CONFIRMED
+  PREPARING
+  READY
+  SERVED
+  CANCELLED
+}
+
+// Order Item model
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  menuItemId String
+  quantity  Int
+  specialRequest String?
+  createdAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("order_items")
+}
+
+// Payment model
+model Payment {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  amount    Float
+  method    PaymentMethod
+  transactionId String?
+  status    PaymentStatus @default(PENDING)
+  pdfInvoice String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  CARD
+  CASH
+  DIGITAL_WALLET
+  CRYPTOCURRENCY
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// Feedback model
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String
+  rating    Int // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("feedback")
+}
+
+// Loyalty Points model
+model LoyaltyPoints {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  points    Int @default(0)
+  tier      String @default("SILVER") // SILVER, GOLD, PLATINUM
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("loyalty_points")
+}
+
+// Peak Hour Statistics model
+model PeakHourStatistics {
+  id        String   @id @default(cuid())
+  date      DateTime
+  hour      Int
+  reservationCount Int @default(0)
+  occupancyPercentage Float @default(0)
+  demandLevel DemandLevel @default(LOW)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("peak_hour_statistics")
+}
+
+enum DemandLevel {
+  LOW
+  MEDIUM
+  HIGH
+  PEAK
+}
+
+// Dynamic Pricing model
+model DynamicPrice {
+  id          String   @id @default(cuid())
+  menuItemId  String
+  timeRange   String   // "11:00-15:00" (lunch)
+  dayOfWeek   Int      // 0=Sun, 6=Sat (-1 for all days)
+  demandLevel DemandLevel
+  priceMultiplier Float @default(1.0)
+  minPrice    Float?
+  maxPrice    Float?
+  status      PriceStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@map("dynamic_prices")
+}
+
+enum PriceStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+// Reward Catalog model
+model RewardCatalog {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  pointsCost  Int
+  discount    Float?
+  freeItem    String?  // MenuItem ID
+  validUntil  DateTime
+  totalLimit  Int?
+  perUserLimit Int @default(1)
+  claimCount  Int @default(0)
+  status      RewardStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  redemptions RewardRedemption[]
+
+  @@map("reward_catalogs")
+}
+
+enum RewardStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  SOLD_OUT
+}
+
+// Reward Redemption model
+model RewardRedemption {
+  id          String   @id @default(cuid())
+  userId      String
+  rewardId    String
+  pointsSpent Int
+  status      RedemptionStatus @default(REDEEMED)
+  orderId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward RewardCatalog @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+
+  @@map("reward_redemptions")
+}
+
+enum RedemptionStatus {
+  REDEEMED
+  CANCELLED
+  EXPIRED
+}
+
+// Notification Preference model
+model NotificationPreference {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  emailNotifs           Boolean @default(true)
+  smsNotifs             Boolean @default(false)
+  pushNotifs            Boolean @default(true)
+  promotions            Boolean @default(true)
+  orderUpdates          Boolean @default(true)
+  reservationReminders  Boolean @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// Notification model
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  status    NotificationStatus @default(PENDING)
+  sentAt    DateTime?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  ORDER_CONFIRMED
+  ORDER_READY
+  ORDER_SERVED
+  RESERVATION_CONFIRMED
+  RESERVATION_REMINDER_24H
+  RESERVATION_REMINDER_1H
+  WAITLIST_SEATED
+  WAITLIST_APPROACHING
+  LOYALTY_MILESTONE
+  REWARD_AVAILABLE
+  PROMOTION
+  FEEDBACK_REQUEST
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  BOUNCED
+}

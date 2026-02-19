@@ -1,0 +1,576 @@
+[
+  {
+    "id": "mock-1771260572240",
+    "name": "Vanilla Ice Cream",
+    "description": "Smooth and creamy classic vanilla ice cream with a rich, sweet flavor loved by all ages.",
+    "price": 80,
+    "category": "DESSERT",
+    "image": "/images/menu/user-vanilla-ice-cream.jpeg",
+    "moodTags": [
+      "Happy",
+      "Calm",
+      "Comfortable"
+    ],
+    "suitableFor": [
+      "Kids’ treats",
+      "family meals",
+      "casual desserts",
+      "and anytime sweet cravings."
+    ],
+    "prepTime": 5,
+    "available": true,
+    "createdAt": "2026-02-16T16:49:32.240Z",
+    "customizations": [
+      "Chocolate / caramel topping",
+      "Add brownie pieces",
+      "Double scoop .  Waffle cone option",
+      "Mix with another flavor (half & half)"
+    ]
+  },
+  {
+    "id": "mock-1771260379211",
+    "name": "Rasmalai",
+    "description": "Soft cottage cheese patties soaked in chilled, sweetened saffron milk and garnished with pistachios.",
+    "price": 110,
+    "category": "DESSERT",
+    "image": "/images/menu/user-rasmalai.jpeg",
+    "moodTags": [
+      "Calm",
+      "Romantic",
+      "Comfortable"
+    ],
+    "suitableFor": [
+      "Festive occasions",
+      "family dinners",
+      "special celebrations",
+      "and traditional dessert lovers."
+    ],
+    "prepTime": 25,
+    "available": true,
+    "createdAt": "2026-02-16T16:46:19.211Z",
+    "customizations": [
+      "Extra saffron milk",
+      "Add dry fruits",
+      "Serve chilled / extra chilled",
+      "Mini / full portion",
+      "Add silver varq garnish"
+    ]
+  },
+  {
+    "id": "mock-1771259804568",
+    "name": "Ice Cream Sundae",
+    "description": "Creamy scoops of ice cream layered with chocolate syrup, nuts, and whipped cream for a delightful sweet treat.",
+    "price": 130,
+    "category": "DESSERT",
+    "image": "/images/menu/user-ice-cream-delight.jpeg",
+    "moodTags": [
+      "Happy",
+      "Romantic",
+      "Comfortable"
+    ],
+    "suitableFor": [
+      "Celebrations",
+      "family outings",
+      "date nights",
+      "and dessert lovers."
+    ],
+    "prepTime": 10,
+    "available": true,
+    "createdAt": "2026-02-16T16:36:44.568Z",
+    "customizations": [
+      "Choice of ice cream flavors",
+      "Extra toppings (sprinkles",
+      "nuts",
+      "Oreo",
+      "KitKat)",
+      "Extra whipped cream",
+      "Chocolate / caramel / strawberry sauce option",
+      "Large sharing size"
+    ]
+  },
+  {
+    "id": "mock-1771255874631",
+    "name": "Chocolate Brownie",
+    "description": "Rich and fudgy chocolate brownie baked to perfection with a soft, gooey center.",
+    "price": 150,
+    "category": "DESSERT",
+    "image": "/images/menu/user-chocolate-brownie.jpeg",
+    "moodTags": [
+      "Happy",
+      "Romantic",
+      "Comfortable"
+    ],
+    "suitableFor": [
+      "Date nights",
+      "dessert cravings",
+      "celebrations",
+      "and sweet lovers."
+    ],
+    "prepTime": 30,
+    "available": true,
+    "createdAt": "2026-02-16T15:31:14.631Z",
+    "customizations": [
+      "Add vanilla ice cream",
+      "Extra chocolate sauce",
+      "Add nuts or choco chips",
+      "Make it sizzling brownie",
+      "Eggless option"
+    ]
+  },
+  {
+    "id": "mock-1771255696009",
+    "name": "Gulab Jamun",
+    "description": "Soft, deep-fried milk dumplings soaked in warm sugar syrup flavored with cardamom and rose.",
+    "price": 90,
+    "category": "DESSERT",
+    "image": "/images/menu/user-gulab-jamun.jpeg",
+    "moodTags": [
+      "Happy",
+      "Romantic",
+      "Comfortable"
+    ],
+    "suitableFor": [
+      "Festive celebrations",
+      "family dinners",
+      "special occasions",
+      "and dessert lovers."
+    ],
+    "prepTime": 20,
+    "available": true,
+    "createdAt": "2026-02-16T15:28:16.009Z",
+    "customizations": [
+      "Serve warm / extra warm",
+      "Add vanilla ice cream",
+      "Extra syrup",
+      "Add dry fruits garnish",
+      "Mini (2 pcs) / Regular (4 pcs) portion"
+    ]
+  },
+  {
+    "id": "mock-1771255440839",
+    "name": "Chicken Manchurian",
+    "description": "Crispy fried chicken tossed in a tangy, spicy Indo-Chinese sauce with garlic, soy, and spring onions.",
+    "price": 190,
+    "category": "APPETIZER",
+    "image": "/images/menu/user-chicken-manchurian.jpeg",
+    "moodTags": [
+      "Energetic",
+      "Adventurous",
+      "Happy"
+    ],
+    "suitableFor": [
+      "Party starters",
+      "group dining",
+      "casual dinners",
+      "and spicy food lovers."
+    ],
+    "prepTime": 25,
+    "available": true,
+    "createdAt": "2026-02-16T15:24:00.840Z",
+    "customizations": [
+      "Dry style",
+      "Gravy style",
+      "Extra spicy level",
+      "Extra sauce",
+      "Combo with fried rice."
+    ]
+  },
+  {
+    "id": "mock-1771255219849",
+    "name": "Malai Kabab",
+    "description": "Tender chicken pieces marinated in cream, cheese, and mild spices, grilled to a soft and juicy finish.",
+    "price": 180,
+    "category": "APPETIZER",
+    "image": "/images/menu/user-chicken-malai-kabab.jpeg",
+    "moodTags": [
+      "Romantic",
+      "Comfortable",
+      "Calm"
+    ],
+    "suitableFor": [
+      "Dinner dates",
+      "special occasions",
+      "family gatherings",
+      "and elegant starters."
+    ],
+    "prepTime": 35,
+    "available": true,
+    "createdAt": "2026-02-16T15:20:19.849Z",
+    "customizations": [
+      "Extra crispy option",
+      "Cheese-filled center",
+      "Extra chutney",
+      "Platter serving."
+    ]
+  },
+  {
+    "id": "mock-1771255049415",
+    "name": "French Fries",
+    "description": "Crispy golden potato sticks lightly salted and served hot with ketchup or dipping sauce.",
+    "price": 120,
+    "category": "APPETIZER",
+    "image": "/images/menu/user-french-fries.jpeg",
+    "moodTags": [
+      "Happy",
+      "Comfortable",
+      "Energetic"
+    ],
+    "suitableFor": [
+      "Snacks",
+      "kids’ meals",
+      "casual outings",
+      "and quick bites."
+    ],
+    "prepTime": 15,
+    "available": true,
+    "createdAt": "2026-02-16T15:17:29.416Z",
+    "customizations": [
+      "Peri-peri seasoning",
+      "Masala seasoning",
+      "Cheese topping",
+      "Extra dip",
+      "Loaded fries style."
+    ]
+  },
+  {
+    "id": "mock-1771254854801",
+    "name": "Chicken Tikka",
+    "description": "Juicy boneless chicken marinated in yogurt and aromatic spices, grilled to smoky perfection.",
+    "price": 260,
+    "category": "APPETIZER",
+    "image": "/images/menu/user-chicken-tikka-kabab.jpeg",
+    "moodTags": [
+      "Happy",
+      "Adventurous",
+      "Energetic"
+    ],
+    "suitableFor": [
+      "Starters",
+      "dinner parties",
+      "festive gatherings",
+      "and barbecue nights."
+    ],
+    "prepTime": 35,
+    "available": true,
+    "createdAt": "2026-02-16T15:14:14.802Z",
+    "customizations": [
+      "Extra spicy",
+      "Mild",
+      "Extra mint chutney",
+      "Cheese stuffing",
+      "Tandoori platter style."
+    ]
+  },
+  {
+    "id": "mock-1771254639054",
+    "name": "Chicken Spring Rolls",
+    "description": "Crispy golden rolls stuffed with seasoned chicken and fresh vegetables, served with a flavorful dipping sauce.",
+    "price": 150,
+    "category": "APPETIZER",
+    "image": "/images/menu/user-chicken-spring-rolls.jpeg",
+    "moodTags": [
+      "Happy",
+      "Energetic",
+      "Adventurous"
+    ],
+    "suitableFor": [
+      "Starter platters",
+      "parties",
+      "evening snacks",
+      "and casual dining."
+    ],
+    "prepTime": 20,
+    "available": true,
+    "createdAt": "2026-02-16T15:10:39.054Z",
+    "customizations": [
+      "Spicy sauce",
+      "Sweet chili sauce",
+      "Extra stuffing",
+      "Cheese add-on",
+      "Baked option."
+    ]
+  },
+  {
+    "id": "mock-1771254449729",
+    "name": "Chicken Fried Rice",
+    "description": "Wok-tossed rice stir-fried with tender chicken pieces, fresh vegetables, and flavorful sauces for a delicious Indo-Chinese taste.",
+    "price": 200,
+    "category": "MAIN",
+    "image": "/images/menu/user-chicken-fried-rice.jpeg",
+    "moodTags": [
+      "Energetic",
+      "Happy",
+      "Adventurous"
+    ],
+    "suitableFor": [
+      "Casual dining",
+      "group meals",
+      "lunch specials",
+      "and quick dinner cravings."
+    ],
+    "prepTime": 25,
+    "available": true,
+    "createdAt": "2026-02-16T15:07:29.729Z",
+    "customizations": [
+      "Extra vegetables",
+      "Extra spicy level",
+      "Less oil",
+      "Combo with Manchurian."
+    ]
+  },
+  {
+    "id": "mock-1771254252023",
+    "name": "Dal Tadka",
+    "description": "Yellow lentils slow-cooked and tempered with ghee, cumin, garlic, and aromatic spices for a rich, homely flavor.",
+    "price": 180,
+    "category": "MAIN",
+    "image": "/images/menu/user-dal-tadka.jpeg",
+    "moodTags": [
+      "Calm",
+      "Comfortable",
+      "Happy"
+    ],
+    "suitableFor": [
+      "Everyday meals",
+      "family dinners",
+      "and traditional Indian thali servings."
+    ],
+    "prepTime": 25,
+    "available": true,
+    "createdAt": "2026-02-16T15:04:12.023Z",
+    "customizations": [
+      "Extra tadka (ghee tempering)",
+      "Less spicy",
+      "Add butter",
+      "Add jeera rice combo."
+    ]
+  },
+  {
+    "id": "mock-1771254034084",
+    "name": "Butter Naan",
+    "description": "Soft and fluffy Indian flatbread brushed with melted butter and baked to perfection in a tandoor.",
+    "price": 40,
+    "category": "MAIN",
+    "image": "/images/menu/user-butter-naan.jpeg",
+    "moodTags": [
+      "Comfortable",
+      "Happy"
+    ],
+    "suitableFor": [
+      "Pairing with curries",
+      "family meals",
+      "traditional dinners",
+      "and festive spreads."
+    ],
+    "prepTime": 15,
+    "available": true,
+    "createdAt": "2026-02-16T15:00:34.084Z",
+    "customizations": [
+      "Extra butter",
+      "Garlic naan",
+      "Cheese naan",
+      "Whole wheat option."
+    ]
+  },
+  {
+    "id": "mock-1771253795000",
+    "name": "Vegetable Biryani",
+    "description": "Fragrant basmati rice cooked with fresh vegetables, aromatic spices, and herbs for a flavorful and satisfying dish.",
+    "price": 220,
+    "category": "MAIN",
+    "image": "/images/menu/user-veg-biryani.jpeg",
+    "moodTags": [
+      "Happy",
+      "Comfortable",
+      "Adventurous"
+    ],
+    "suitableFor": [
+      "Family gatherings",
+      "festive occasions",
+      "lunch specials",
+      "and group dining."
+    ],
+    "prepTime": 35,
+    "available": true,
+    "createdAt": "2026-02-16T14:56:35.000Z",
+    "customizations": [
+      "Extra raita",
+      "Extra gravy",
+      "Mild Spice",
+      "Add paneer",
+      "Dum-cooked special version."
+    ]
+  },
+  {
+    "id": "mock-1771253563413",
+    "name": "Paneer Butter Masala",
+    "description": "Soft paneer cubes cooked in a rich, creamy tomato-butter gravy infused with aromatic Indian spices.",
+    "price": 280,
+    "category": "MAIN",
+    "image": "/images/menu/user-paneer-butter-masala.jpeg",
+    "moodTags": [
+      "Happy",
+      "Comfortable",
+      "Romantic"
+    ],
+    "suitableFor": [
+      "Family dinners",
+      "special occasions",
+      "festive meals",
+      "and fine dining."
+    ],
+    "prepTime": 30,
+    "available": true,
+    "createdAt": "2026-02-16T14:52:43.413Z",
+    "customizations": [
+      "Extra creamy",
+      "Less cream",
+      "Mild spice",
+      "Extra spice",
+      "Extra gravy",
+      "Butter topping."
+    ]
+  },
+  {
+    "id": "mock-1771253367614",
+    "name": "Masala Chaas (Buttermilk)",
+    "description": "A refreshing yogurt-based drink blended with roasted cumin, fresh coriander, and mild spices for a cooling, savory taste.",
+    "price": 60,
+    "category": "DRINKS",
+    "image": "/images/menu/user-masala-chaas.jpeg",
+    "moodTags": [
+      "Calm",
+      "Comfortable"
+    ],
+    "suitableFor": [
+      "Traditional meals",
+      "hot weather",
+      "family dining",
+      "and post-meal refreshment."
+    ],
+    "prepTime": 5,
+    "available": true,
+    "createdAt": "2026-02-16T14:49:27.614Z",
+    "customizations": [
+      "Extra roasted cumin",
+      "Extra chilled option",
+      "Less salt",
+      "Mint flavor ."
+    ]
+  },
+  {
+    "id": "mock-1771253059346",
+    "name": "Lemon Iced Tea",
+    "description": "A cool and refreshing blend of brewed tea, fresh lemon juice, and ice with a light citrusy twist.",
+    "price": 90,
+    "category": "DRINKS",
+    "image": "/images/menu/user-iced-lemon-tea-2.jpeg",
+    "moodTags": [
+      "Calm",
+      "Energetic",
+      "Comfortable"
+    ],
+    "suitableFor": [
+      "Summer afternoons",
+      "casual lunches",
+      "light meals",
+      "and relaxation breaks."
+    ],
+    "prepTime": 7,
+    "available": true,
+    "createdAt": "2026-02-16T14:44:19.347Z",
+    "customizations": [
+      "Sweet",
+      "Less sweet",
+      "Mint flavor add-on",
+      "Extra lemon",
+      "Peach flavor ."
+    ]
+  },
+  {
+    "id": "mock-1771252699761",
+    "name": "Cold Coffee",
+    "description": "A chilled and creamy blend of coffee, milk, and ice, topped with froth for a rich and refreshing taste.",
+    "price": 110,
+    "category": "DRINKS",
+    "image": "/images/menu/user-cinnamon-cold-coffee.jpeg",
+    "moodTags": [
+      "Energetic",
+      "Happy",
+      "Comfortable"
+    ],
+    "suitableFor": [
+      "Evening hangouts",
+      "café-style breaks",
+      "casual meetings",
+      "and summer refreshment."
+    ],
+    "prepTime": 10,
+    "available": true,
+    "createdAt": "2026-02-16T14:38:19.761Z",
+    "customizations": [
+      "Extra strong coffee",
+      "Add ice cream",
+      "Chocolate syrup topping",
+      "Less sugar."
+    ]
+  },
+  {
+    "id": "mock-1771252492222",
+    "name": "Mango Milkshake",
+    "description": "A creamy and delicious blend of ripe mangoes and chilled milk, topped with a smooth, sweet finish.",
+    "price": 120,
+    "category": "DRINKS",
+    "image": "/images/menu/user-mango-milkshake.jpeg",
+    "moodTags": [
+      "Happy",
+      "Comfortable",
+      "Calm"
+    ],
+    "suitableFor": [
+      "Summer treats",
+      "family outings",
+      "dessert drinks",
+      "and casual dining."
+    ],
+    "prepTime": 7,
+    "available": true,
+    "createdAt": "2026-02-16T14:34:52.222Z",
+    "customizations": [
+      "Extra thick option",
+      "Add ice cream scoop",
+      "Less sugar",
+      "Dry fruits topping."
+    ]
+  },
+  {
+    "id": "mock-1771251792307",
+    "name": "Fresh Lime Soda",
+    "description": "A refreshing blend of freshly squeezed lime juice, chilled soda, and a hint of sugar and salt for a zesty, cooling drink.",
+    "price": 80,
+    "category": "DRINKS",
+    "image": "/images/menu/user-mint-lime.jpeg",
+    "moodTags": [
+      "Happy",
+      "Energetic",
+      "Comfortable"
+    ],
+    "suitableFor": [
+      "Summer days",
+      "casual outings",
+      "family meals",
+      "and quick refreshment breaks."
+    ],
+    "prepTime": 5,
+    "available": true,
+    "createdAt": "2026-02-16T14:23:12.307Z",
+    "customizations": [
+      "Sweet",
+      "Salted",
+      "Mixed",
+      "Extra lime",
+      "Extra ice",
+      "Mint flavor add-on."
+    ]
+  }
+]
