@@ -291,7 +291,6 @@ MIT License - See LICENSE file for details
 
 ## 👥 Contributors
 
-- Naimu Ahmad
 
 ## 📧 Contact
 
