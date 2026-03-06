@@ -8,6 +8,9 @@ export interface DashboardMetrics {
     transactions: number;
     average: number;
   };
+  tax: {
+    total: number;
+  };
   orders: {
     total: number;
     average: number;
@@ -20,7 +23,12 @@ export interface DashboardMetrics {
     total: number;
     utilization: number;
   };
-  topItem: string | null;
+  topItem: {
+    id: string;
+    name: string;
+    quantity: number;
+    orders: number;
+  } | null;
 }
 
 export interface DashboardOverview {

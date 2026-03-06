@@ -28,7 +28,8 @@ export const getDashboardOverview = async (req: authenticatedRequest, res: Respo
       where: {
         createdAt: { gte: start, lte: end }
       },
-      _count: true
+      _count: true,
+      _sum: { taxAmount: true }
     });
 
     // Total customers (unique users that made orders)
@@ -44,7 +45,7 @@ export const getDashboardOverview = async (req: authenticatedRequest, res: Respo
     const avgOrderValue = paymentStats._count > 0 ? (paymentStats._sum.amount || 0) / paymentStats._count : 0;
 
     // Most ordered item
-    const topItem = await prisma.orderItem.groupBy({
+    const topItemGrouped = await prisma.orderItem.groupBy({
       by: ['menuItemId'],
       where: {
         order: {
@@ -52,9 +53,18 @@ export const getDashboardOverview = async (req: authenticatedRequest, res: Respo
         }
       },
       _count: { id: true },
-      orderBy: { _count: { id: 'desc' } },
+      _sum: { quantity: true },
+      orderBy: { _sum: { quantity: 'desc' } },
       take: 1
     });
+
+    const topItemMenuId = topItemGrouped[0]?.menuItemId;
+    const topMenuItem = topItemMenuId
+      ? await prisma.menuItem.findUnique({
+          where: { id: topItemMenuId },
+          select: { id: true, name: true }
+        })
+      : null;
 
     // Table utilization
     const reservationStats = await prisma.reservation.aggregate({
@@ -78,6 +88,9 @@ export const getDashboardOverview = async (req: authenticatedRequest, res: Respo
           transactions: paymentStats._count,
           average: avgOrderValue
         },
+        tax: {
+          total: orderStats._sum.taxAmount || 0
+        },
         orders: {
           total: orderStats._count,
           average: orderStats._count > 0 ? (paymentStats._sum.amount || 0) / orderStats._count : 0
@@ -90,7 +103,14 @@ export const getDashboardOverview = async (req: authenticatedRequest, res: Respo
           total: totalTables,
           utilization: Math.round(tableUtilization * 100)
         },
-        topItem: topItem[0] ? topItem[0].menuItemId : null
+        topItem: topMenuItem && topItemGrouped[0]
+          ? {
+              id: topMenuItem.id,
+              name: topMenuItem.name,
+              quantity: topItemGrouped[0]._sum.quantity || 0,
+              orders: topItemGrouped[0]._count.id || 0
+            }
+          : null
       },
       timestamp: new Date().toISOString()
     });

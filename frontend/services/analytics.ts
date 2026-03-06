@@ -13,6 +13,7 @@ import {
 const nowIso = new Date().toISOString();
 const fallbackOverview: DashboardOverview['data'] = {
   revenue: { total: 0, transactions: 0, average: 0 },
+  tax: { total: 0 },
   orders: { total: 0, average: 0 },
   customers: { total: 0, returning: 0 },
   tables: { total: 0, utilization: 0 },

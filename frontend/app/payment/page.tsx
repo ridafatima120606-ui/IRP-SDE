@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CreditCard, Loader } from 'lucide-react';
+import { ArrowLeft, CreditCard, Loader, QrCode } from 'lucide-react';
 
 interface CartItem {
   id: string;
@@ -30,6 +30,7 @@ export default function PaymentPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const [copied, setCopied] = useState(false);
   const [formData, setFormData] = useState({
     cardName: '',
     cardNumber: '',
@@ -61,6 +62,27 @@ export default function PaymentPage() {
   const discountedSubtotal = Math.max(0, subtotal - totalDiscount);
   const tax = discountedSubtotal * 0.05;
   const total = discountedSubtotal + tax;
+
+  const upiId = process.env.NEXT_PUBLIC_UPI_ID || 'merchant@okhdfcbank';
+  const merchantName = process.env.NEXT_PUBLIC_UPI_NAME || 'Smart Dining Restaurant';
+  const upiNote = `Food order payment`;
+  const upiUrl = useMemo(() => {
+    const amount = total.toFixed(2);
+    const query = new URLSearchParams({
+      pa: upiId,
+      pn: merchantName,
+      am: amount,
+      cu: 'INR',
+      tn: upiNote,
+    });
+    return `upi://pay?${query.toString()}`;
+  }, [merchantName, total, upiId]);
+
+  const qrImageUrl = useMemo(
+    () =>
+      `https://quickchart.io/qr?size=320&text=${encodeURIComponent(upiUrl)}`,
+    [upiUrl]
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -122,6 +144,16 @@ export default function PaymentPage() {
       alert('Payment processing error. Please try again.');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleCopyUpi = async () => {
+    try {
+      await navigator.clipboard.writeText(upiUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch (error) {
+      console.error('Failed to copy UPI link', error);
     }
   };
 
@@ -276,6 +308,46 @@ export default function PaymentPage() {
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
+                    </div>
+                  </div>
+                )}
+
+                {paymentMethod === 'upi' && (
+                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <QrCode className="w-5 h-5 text-orange-600" />
+                      <h3 className="font-bold text-gray-900">Scan & Pay with Google Pay / Any UPI App</h3>
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-5 items-start">
+                      <img
+                        src={qrImageUrl}
+                        alt="UPI QR Code"
+                        className="w-44 h-44 rounded-lg border border-gray-200 bg-white p-2"
+                      />
+                      <div className="text-sm text-gray-700 space-y-2">
+                        <p>
+                          UPI ID: <span className="font-semibold">{upiId}</span>
+                        </p>
+                        <p>
+                          Amount: <span className="font-semibold">Rs {total.toFixed(2)}</span>
+                        </p>
+                        <p className="text-xs text-gray-500">After payment, click the Pay button below to confirm your order.</p>
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={handleCopyUpi}
+                            className="px-3 py-2 text-xs font-semibold rounded-md bg-gray-900 text-white hover:bg-gray-800"
+                          >
+                            {copied ? 'Copied' : 'Copy UPI Link'}
+                          </button>
+                          <a
+                            href={upiUrl}
+                            className="px-3 py-2 text-xs font-semibold rounded-md border border-gray-300 text-gray-800 hover:bg-gray-100"
+                          >
+                            Open UPI App
+                          </a>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
