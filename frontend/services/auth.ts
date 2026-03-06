@@ -86,15 +86,13 @@ export const authService = {
    */
   login: async (payload: LoginPayload): Promise<AuthResponse> => {
     try {
-      // Use shared apiClient (baseURL is http://localhost:5000)
-      const response = await apiClient.post<AuthResponse>(
-        '/api/v1/auth/login',
+      // Use normalized API base to avoid duplicate /api/v1 in some env setups
+      const response = await axios.post<AuthResponse>(
+        `${API_BASE}/auth/login`,
         payload
       );
 
-      // apiClient interceptor returns response.data directly (from axios)
-      // response is already { status, message, data: { token, user } }
-      const data = response as any as AuthResponse;
+      const data = response.data;
 
       if (data?.data?.token) {
         setToken(data.data.token);
