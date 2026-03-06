@@ -8,7 +8,8 @@ import {
   deleteMenuItem,
   getMenuByCategory,
   getCategories,
-  toggleAvailability
+  toggleAvailability,
+  bulkUploadMenuCsv
 } from '../controllers/menuController';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -96,6 +97,18 @@ router.patch(
   ],
   handleValidationErrors,
   toggleAvailability
+);
+
+// Bulk upload/update menu using CSV content
+router.post(
+  '/bulk-upload',
+  authenticate,
+  authorize(['ADMIN']),
+  [
+    body('csvData').isString().withMessage('csvData must be provided as string')
+  ],
+  handleValidationErrors,
+  bulkUploadMenuCsv
 );
 
 export default router;

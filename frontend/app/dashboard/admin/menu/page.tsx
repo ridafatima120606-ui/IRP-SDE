@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { menuService, MenuItem } from '@/services/menu';
 import { Card } from '@/components/ui/card';
@@ -29,6 +29,8 @@ export default function AdminMenuPage() {
     customizations: '',
   });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [csvData, setCsvData] = useState('');
+  const [csvSubmitting, setCsvSubmitting] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
@@ -208,6 +210,43 @@ export default function AdminMenuPage() {
     }
   };
 
+  const handleCsvFileSelected = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      setCsvData(text);
+      setMessage(`Loaded CSV file: ${file.name}`);
+      setError('');
+    } catch (err: any) {
+      setError(err?.message || 'Failed to read CSV file');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const submitCsvUpload = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!csvData.trim()) {
+      setError('Paste CSV data or select a CSV file first.');
+      return;
+    }
+
+    setCsvSubmitting(true);
+    setError('');
+    setMessage('');
+    try {
+      const result = await menuService.bulkUploadCsv(csvData);
+      const { totalRows, created, updated, skipped } = result.data;
+      setMessage(`CSV processed: ${totalRows} rows, ${created} created, ${updated} updated, ${skipped} skipped.`);
+      await loadData();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err?.message || 'Failed to process CSV upload');
+    } finally {
+      setCsvSubmitting(false);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <Card className="p-8 text-center">
@@ -301,6 +340,33 @@ export default function AdminMenuPage() {
           <div className="md:col-span-4">
             <Button type="submit" disabled={submitting}>
               {submitting ? 'Adding...' : 'Add Item'}
+            </Button>
+          </div>
+        </form>
+      </Card>
+
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-2">Bulk Upload from CSV</h2>
+        <p className="text-sm text-slate-600 mb-4">
+          Required headers: <code>name,price,category</code>. Optional: <code>description,image,prepTime,moodTags,suitableFor</code>.
+        </p>
+        <form onSubmit={submitCsvUpload} className="space-y-3">
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={handleCsvFileSelected}
+            className="block w-full text-sm"
+          />
+          <textarea
+            value={csvData}
+            onChange={(e) => setCsvData(e.target.value)}
+            rows={8}
+            placeholder="name,price,category,description,prepTime&#10;Paneer Tikka,12.5,APPETIZER,Spicy grilled paneer,15"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+          <div>
+            <Button type="submit" disabled={csvSubmitting}>
+              {csvSubmitting ? 'Uploading CSV...' : 'Upload CSV'}
             </Button>
           </div>
         </form>

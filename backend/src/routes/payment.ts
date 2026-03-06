@@ -8,6 +8,7 @@ import {
   getPaymentHistory,
   getPaymentDetails,
   generateInvoice,
+  generateThermalReceiptText,
   handlePaymentWebhook
 } from '../controllers/paymentController';
 import { authenticate } from '../middleware/auth';
@@ -116,12 +117,25 @@ router.get(
 );
 
 /**
+ * GET /api/v1/payments/:paymentId/receipt-text
+ * Generate thermal-printer-friendly receipt text
+ */
+router.get(
+  '/:paymentId/receipt-text',
+  [
+    param('paymentId').notEmpty().withMessage('Payment ID is required')
+  ],
+  handleValidationErrors,
+  authenticate,
+  generateThermalReceiptText
+);
+
+/**
  * POST /api/v1/payments/webhook/stripe
  * Stripe webhook handler (no authentication required for webhooks)
  */
 router.post(
   '/webhook/stripe',
-  // Webhook should be raw body, not JSON parsed
   (req: Request, res, next) => {
     if (req.path === '/webhook/stripe') {
       return handlePaymentWebhook(req, res);

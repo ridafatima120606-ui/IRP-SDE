@@ -7,7 +7,8 @@ import {
   getPeakHours,
   getTopItems,
   getRevenueAnalytics,
-  getCustomerInsights
+  getCustomerInsights,
+  getEndOfDayReport
 } from '../controllers/analyticsController';
 import { authenticate, authorize } from '../middleware/auth';
 import { handleValidationErrors } from '../middleware/errorHandler';
@@ -120,6 +121,19 @@ router.get(
   ],
   handleValidationErrors,
   getCustomerInsights
+);
+
+/**
+ * GET /api/v1/analytics/reports/end-of-day
+ * Query params: date (YYYY-MM-DD, optional)
+ */
+router.get(
+  '/reports/end-of-day',
+  [
+    query('date').optional().isISO8601()
+  ],
+  handleValidationErrors,
+  getEndOfDayReport
 );
 
 export default router;

@@ -10,6 +10,30 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16',
 });
 
+const finalizeOrderAfterSuccessfulPayment = async (orderId: string) => {
+  const order = await prisma.order.update({
+    where: { id: orderId },
+    data: { orderStatus: 'SERVED' },
+    select: {
+      id: true,
+      tableId: true
+    }
+  });
+
+  if (order.tableId) {
+    try {
+      await prisma.table.update({
+        where: { id: order.tableId },
+        data: { status: 'AVAILABLE' }
+      });
+    } catch (error) {
+      console.warn(`Failed to release table ${order.tableId} after payment:`, error);
+    }
+  }
+
+  return order;
+};
+
 // Create payment intent for checkout
 export const createPaymentIntent = async (req: authenticatedRequest, res: Response) => {
   try {
@@ -243,11 +267,8 @@ export const confirmPayment = async (req: authenticatedRequest, res: Response) =
       data: { status: 'COMPLETED' }
     });
 
-    // Update order status
-    await prisma.order.update({
-      where: { id: payment.orderId },
-      data: { orderStatus: 'CONFIRMED' }
-    });
+    // Finalize order and release table
+    await finalizeOrderAfterSuccessfulPayment(payment.orderId);
 
     return res.status(200).json({
       status: 'SUCCESS',
@@ -592,6 +613,92 @@ export const generateInvoice = async (req: authenticatedRequest, res: Response) 
   }
 };
 
+
+// Generate thermal-printer-friendly plain text receipt
+export const generateThermalReceiptText = async (req: authenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { paymentId } = req.params;
+
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        order: {
+          include: {
+            user: true,
+            items: {
+              include: {
+                menuItem: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        status: 'ERROR',
+        message: 'Payment not found',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (payment.order.userId !== userId) {
+      return res.status(403).json({
+        status: 'FORBIDDEN',
+        message: 'You do not have permission to access this payment',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const lines: string[] = [];
+    lines.push('SMART DINING RECEIPT');
+    lines.push('------------------------------');
+    lines.push(`Receipt: ${payment.id}`);
+    lines.push(`Order:   ${payment.orderId}`);
+    lines.push(`Date:    ${new Date(payment.createdAt).toLocaleString()}`);
+    lines.push(`Method:  ${payment.method}`);
+    lines.push('------------------------------');
+
+    payment.order.items.forEach((item: any) => {
+      const name = item.menuItem?.name || 'Item';
+      const unitPrice = Number(item.menuItem?.price || 0);
+      const quantity = Number(item.quantity || 1);
+      const total = unitPrice * quantity;
+      lines.push(`${name}`);
+      lines.push(`  ${quantity} x ${unitPrice.toFixed(2)} = ${total.toFixed(2)}`);
+    });
+
+    lines.push('------------------------------');
+    lines.push(`Subtotal:       ${(payment.order.totalPrice - payment.order.taxAmount - payment.order.serviceCharge - payment.order.surcharge).toFixed(2)}`);
+    lines.push(`Tax:            ${Number(payment.order.taxAmount || 0).toFixed(2)}`);
+    lines.push(`Service Charge: ${Number(payment.order.serviceCharge || 0).toFixed(2)}`);
+    lines.push(`Surcharge:      ${Number(payment.order.surcharge || 0).toFixed(2)}`);
+    lines.push(`TOTAL:          ${Number(payment.order.totalPrice || 0).toFixed(2)}`);
+    lines.push('------------------------------');
+    lines.push('Thank you for dining with us!');
+
+    return res.status(200).json({
+      status: 'SUCCESS',
+      message: 'Thermal receipt generated successfully',
+      data: {
+        paymentId: payment.id,
+        orderId: payment.orderId,
+        receiptText: lines.join('\n')
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('Generate thermal receipt error:', error);
+    return res.status(500).json({
+      status: 'ERROR',
+      message: error.message || 'Failed to generate thermal receipt',
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
 // Helper function to map payment method string to enum
 function mapPaymentMethod(method: string): string {
   const methodMap: { [key: string]: string } = {
@@ -637,10 +744,7 @@ export const handlePaymentWebhook = async (req: Request, res: Response) => {
             data: { status: 'COMPLETED' }
           });
 
-          await prisma.order.update({
-            where: { id: orderId },
-            data: { orderStatus: 'CONFIRMED' }
-          });
+          await finalizeOrderAfterSuccessfulPayment(orderId);
         }
         break;
 
@@ -684,3 +788,6 @@ export const handlePaymentWebhook = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+

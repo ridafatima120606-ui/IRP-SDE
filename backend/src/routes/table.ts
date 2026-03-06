@@ -8,7 +8,9 @@ import {
   deleteTable,
   getAvailableTables,
   updateTableStatus,
-  getTablesByAmbiance
+  getTablesByAmbiance,
+  getFloorPlan,
+  getTableClearanceForecast
 } from '../controllers/tableController';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -37,6 +39,10 @@ router.get('/', getAllTables);
 router.get('/available', getAvailableTables);
 
 router.get('/ambiance/:ambiance', getTablesByAmbiance);
+
+router.get('/floor-plan', getFloorPlan);
+
+router.get('/clearance-forecast', getTableClearanceForecast);
 
 router.get('/:id', getTableById);
 
@@ -94,3 +100,5 @@ router.patch(
 );
 
 export default router;
+
+

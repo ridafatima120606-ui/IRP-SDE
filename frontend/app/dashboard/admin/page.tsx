@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
-import { BarChart3, Users, Clock, TrendingUp, Settings, LogOut, UtensilsCrossed, ClipboardList } from 'lucide-react';
+import { BarChart3, Users, Clock, TrendingUp, Settings, LogOut, UtensilsCrossed, ClipboardList, MapPin } from 'lucide-react';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -194,6 +194,22 @@ export default function AdminDashboard() {
 
         {/* Additional Admin Features */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Floor Plan */}
+          <Link href="/dashboard/admin/floor-plan">
+            <div className="bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 hover:border-orange-500 rounded-xl p-6 cursor-pointer transition-all hover:scale-105">
+              <div className="flex items-center gap-3 mb-4">
+                <MapPin className="w-8 h-8 text-cyan-400" />
+                <h4 className="text-lg font-bold text-white">Floor Plan</h4>
+              </div>
+              <p className="text-slate-400 text-sm mb-4">Track table status: available, reserved, occupied.</p>
+              <div className="text-xs text-slate-500">
+                <p>Live occupancy snapshot</p>
+                <p>Reservation visibility</p>
+                <p>Quick operational decisions</p>
+              </div>
+            </div>
+          </Link>
+
           {/* Menu Management */}
           <Link href="/dashboard/admin/menu">
             <div className="bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 hover:border-orange-500 rounded-xl p-6 cursor-pointer transition-all hover:scale-105">

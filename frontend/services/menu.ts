@@ -338,6 +338,27 @@ export const menuService = {
       console.error('Failed to delete menu item:', error);
       throw error;
     }
+  },
+
+  // Admin: bulk upload menu items via CSV content
+  async bulkUploadCsv(csvData: string) {
+    try {
+      const response = await apiClient.post<{
+        status: string;
+        message: string;
+        data: {
+          totalRows: number;
+          created: number;
+          updated: number;
+          skipped: number;
+          errors: Array<{ row: number; message: string }>;
+        };
+      }>('/api/v1/menu/bulk-upload', { csvData });
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to bulk upload menu CSV:', error);
+      throw error;
+    }
   }
 };
 

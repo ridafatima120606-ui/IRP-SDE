@@ -7,7 +7,9 @@ import {
   getAllOrders,
   updateOrderStatus,
   addItemsToOrder,
-  cancelOrder
+  cancelOrder,
+  getKitchenPendingOrders,
+  getOrderBillBreakdown
 } from '../controllers/orderController';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -106,6 +108,19 @@ router.get(
   authenticate,
   authorize(['ADMIN', 'CHEF']),
   getAllOrders
+);
+
+router.get(
+  '/kitchen/pending',
+  authenticate,
+  authorize(['ADMIN', 'CHEF']),
+  getKitchenPendingOrders
+);
+
+router.get(
+  '/:id/bill',
+  authenticate,
+  getOrderBillBreakdown
 );
 
 // Public routes

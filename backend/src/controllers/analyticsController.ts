@@ -630,3 +630,131 @@ export const getCustomerInsights = async (req: authenticatedRequest, res: Respon
     });
   }
 };
+
+/**
+ * GET /api/v1/analytics/reports/end-of-day
+ * End-of-day operational and financial report
+ */
+export const getEndOfDayReport = async (req: authenticatedRequest, res: Response) => {
+  try {
+    const dateParam = req.query.date as string | undefined;
+    const targetDate = dateParam ? new Date(dateParam) : new Date();
+
+    const start = new Date(targetDate);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(targetDate);
+    end.setHours(23, 59, 59, 999);
+
+    const [payments, orders, reservations, topItemsGrouped, tablesCount] = await Promise.all([
+      prisma.payment.findMany({
+        where: {
+          createdAt: { gte: start, lte: end },
+          status: 'COMPLETED'
+        },
+        select: {
+          amount: true,
+          method: true
+        }
+      }),
+      prisma.order.findMany({
+        where: {
+          createdAt: { gte: start, lte: end }
+        },
+        select: {
+          id: true,
+          orderStatus: true,
+          totalPrice: true
+        }
+      }),
+      prisma.reservation.findMany({
+        where: {
+          createdAt: { gte: start, lte: end }
+        },
+        select: {
+          id: true,
+          status: true
+        }
+      }),
+      prisma.orderItem.groupBy({
+        by: ['menuItemId'],
+        where: {
+          order: {
+            createdAt: { gte: start, lte: end }
+          }
+        },
+        _sum: { quantity: true },
+        orderBy: {
+          _sum: {
+            quantity: 'desc'
+          }
+        },
+        take: 5
+      }),
+      prisma.table.count()
+    ]);
+
+    const topItemIds = topItemsGrouped.map((item) => item.menuItemId);
+    const topMenuItems = topItemIds.length > 0
+      ? await prisma.menuItem.findMany({
+          where: { id: { in: topItemIds } },
+          select: { id: true, name: true, category: true }
+        })
+      : [];
+
+    const totalRevenue = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const methodBreakdown = payments.reduce<Record<string, number>>((acc, payment) => {
+      const key = String(payment.method);
+      acc[key] = (acc[key] || 0) + payment.amount;
+      return acc;
+    }, {});
+
+    const servedOrders = orders.filter((order) => order.orderStatus === 'SERVED').length;
+    const cancelledOrders = orders.filter((order) => order.orderStatus === 'CANCELLED').length;
+    const completedReservations = reservations.filter((reservation) => reservation.status === 'COMPLETED').length;
+    const cancelledReservations = reservations.filter((reservation) => reservation.status === 'CANCELLED').length;
+
+    return res.status(200).json({
+      status: 'SUCCESS',
+      message: 'End-of-day report generated successfully',
+      data: {
+        reportDate: start.toISOString().split('T')[0],
+        operatingWindow: {
+          start,
+          end
+        },
+        financial: {
+          totalRevenue: Number(totalRevenue.toFixed(2)),
+          transactions: payments.length,
+          paymentMethods: methodBreakdown
+        },
+        service: {
+          ordersTotal: orders.length,
+          ordersServed: servedOrders,
+          ordersCancelled: cancelledOrders,
+          reservationsTotal: reservations.length,
+          reservationsCompleted: completedReservations,
+          reservationsCancelled: cancelledReservations,
+          tablesConfigured: tablesCount
+        },
+        topSellingItems: topItemsGrouped.map((item) => {
+          const menuItem = topMenuItems.find((menu) => menu.id === item.menuItemId);
+          return {
+            menuItemId: item.menuItemId,
+            name: menuItem?.name || 'Unknown',
+            category: menuItem?.category || 'Unknown',
+            quantity: item._sum.quantity || 0
+          };
+        })
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('End-of-day report error:', error);
+    return res.status(500).json({
+      status: 'ERROR',
+      message: error.message || 'Failed to generate end-of-day report',
+      timestamp: new Date().toISOString()
+    });
+  }
+};

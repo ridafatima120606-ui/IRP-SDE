@@ -53,7 +53,12 @@ export const useAuth = () => {
         }
       } catch (err) {
         console.error('Auth check failed:', err);
-        Cookies.remove('auth_token');
+        const status = (err as any)?.response?.status;
+        // Only clear token when backend explicitly says token is invalid.
+        if (status === 401) {
+          Cookies.remove('auth_token');
+          setUser(null);
+        }
       } finally {
         setIsLoading(false);
       }

@@ -544,3 +544,73 @@ export const modifyReservation = async (req: authenticatedRequest, res: Response
     });
   }
 };
+
+// Daily reservation log for operations/admin reporting
+export const getDailyReservationLog = async (req: authenticatedRequest, res: Response) => {
+  try {
+    const dateParam = req.query.date as string | undefined;
+    const targetDate = dateParam ? new Date(dateParam) : new Date();
+
+    const start = new Date(targetDate);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(targetDate);
+    end.setHours(23, 59, 59, 999);
+
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        createdAt: {
+          gte: start,
+          lte: end
+        }
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        table: {
+          select: {
+            id: true,
+            tableNumber: true,
+            capacity: true,
+            status: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    });
+
+    const summary = {
+      total: reservations.length,
+      confirmed: reservations.filter((r) => r.status === 'CONFIRMED').length,
+      completed: reservations.filter((r) => r.status === 'COMPLETED').length,
+      cancelled: reservations.filter((r) => r.status === 'CANCELLED').length,
+      noShow: reservations.filter((r) => r.status === 'NO_SHOW').length
+    };
+
+    return res.status(200).json({
+      status: 'OK',
+      message: 'Daily reservation log retrieved successfully',
+      data: {
+        date: start.toISOString().split('T')[0],
+        summary,
+        reservations
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching daily reservation log:', error);
+    return res.status(500).json({
+      status: 'ERROR',
+      message: 'Failed to fetch daily reservation log',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+};

@@ -4,6 +4,24 @@ import { authenticatedRequest } from '../types';
 import { io } from '../index';
 import { mockDatabase } from '../utils/mockDatabase';
 
+const DEFAULT_SERVICE_CHARGE_PERCENT = 10;
+const DEFAULT_TAX_PERCENT = 5;
+
+const calculateBill = (subtotal: number, serviceChargePercent = DEFAULT_SERVICE_CHARGE_PERCENT, taxPercent = DEFAULT_TAX_PERCENT) => {
+  const normalizedSubtotal = Number(subtotal || 0);
+  const serviceCharge = Number(((normalizedSubtotal * serviceChargePercent) / 100).toFixed(2));
+  const taxAmount = Number(((normalizedSubtotal * taxPercent) / 100).toFixed(2));
+  const total = Number((normalizedSubtotal + serviceCharge + taxAmount).toFixed(2));
+  return {
+    subtotal: normalizedSubtotal,
+    serviceChargePercent,
+    serviceCharge,
+    taxPercent,
+    taxAmount,
+    total
+  };
+};
+
 // Create order
 export const createOrder = async (req: authenticatedRequest, res: Response) => {
   try {
@@ -102,6 +120,93 @@ export const createOrder = async (req: authenticatedRequest, res: Response) => {
   }
 };
 
+// Get bill breakdown for an order (subtotal + service + GST/VAT style tax)
+export const getOrderBillBreakdown = async (req: authenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const requesterId = req.user?.id;
+    const requesterRole = req.user?.role;
+    const serviceChargePercent = req.query.serviceChargePercent
+      ? Number(req.query.serviceChargePercent)
+      : DEFAULT_SERVICE_CHARGE_PERCENT;
+    const taxPercent = req.query.taxPercent ? Number(req.query.taxPercent) : DEFAULT_TAX_PERCENT;
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            menuItem: {
+              select: {
+                id: true,
+                name: true,
+                price: true
+              }
+            }
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        status: 'ERROR',
+        message: 'Order not found',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const isPrivileged = requesterRole === 'ADMIN' || requesterRole === 'CHEF';
+    if (!isPrivileged && requesterId && order.userId !== requesterId) {
+      return res.status(403).json({
+        status: 'FORBIDDEN',
+        message: 'You do not have permission to access this order bill',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const subtotal = order.items.reduce((sum, item) => {
+      const linePrice = item.menuItem?.price ?? 0;
+      return sum + (linePrice * item.quantity);
+    }, 0);
+
+    const bill = calculateBill(subtotal, serviceChargePercent, taxPercent);
+
+    return res.status(200).json({
+      status: 'OK',
+      message: 'Order bill breakdown retrieved successfully',
+      data: {
+        orderId: order.id,
+        user: order.user,
+        items: order.items.map((item) => ({
+          id: item.id,
+          menuItemId: item.menuItemId,
+          name: item.menuItem?.name || item.menuItemId,
+          quantity: item.quantity,
+          unitPrice: item.menuItem?.price ?? 0,
+          lineTotal: Number(((item.menuItem?.price ?? 0) * item.quantity).toFixed(2))
+        })),
+        billing: bill
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error generating order bill breakdown:', error);
+    return res.status(500).json({
+      status: 'ERROR',
+      message: 'Failed to generate bill breakdown',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
 // Get order by ID
 export const getOrderById = async (req: Request, res: Response) => {
   try {
@@ -192,6 +297,83 @@ export const getUserOrders = async (req: authenticatedRequest, res: Response) =>
     res.status(500).json({
       status: 'ERROR',
       message: 'Failed to fetch orders',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+// Kitchen view feed for pending/active orders
+export const getKitchenPendingOrders = async (req: authenticatedRequest, res: Response) => {
+  try {
+    const activeStatuses = ['CONFIRMED', 'PREPARING', 'READY'];
+    const orders = await prisma.order.findMany({
+      where: {
+        orderStatus: { in: activeStatuses as any }
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        items: {
+          include: {
+            menuItem: {
+              select: {
+                id: true,
+                name: true,
+                prepTime: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    });
+
+    const now = Date.now();
+    const kitchenQueue = orders.map((order) => {
+      const waitingMinutes = Math.max(0, Math.floor((now - new Date(order.createdAt).getTime()) / 60000));
+      const estimatedPrepMinutes = order.items.reduce((sum, item) => {
+        const prep = Number(item.menuItem?.prepTime || 0);
+        return sum + prep * item.quantity;
+      }, 0);
+
+      return {
+        id: order.id,
+        tableId: order.tableId,
+        customerName: order.user?.name || 'Guest',
+        status: order.orderStatus,
+        waitingMinutes,
+        estimatedPrepMinutes,
+        createdAt: order.createdAt,
+        items: order.items.map((item) => ({
+          id: item.id,
+          name: item.menuItem?.name || item.menuItemId,
+          quantity: item.quantity,
+          specialRequest: item.specialRequest
+        }))
+      };
+    });
+
+    return res.status(200).json({
+      status: 'OK',
+      message: 'Kitchen pending orders retrieved successfully',
+      data: {
+        total: kitchenQueue.length,
+        orders: kitchenQueue
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching kitchen pending orders:', error);
+    return res.status(500).json({
+      status: 'ERROR',
+      message: 'Failed to fetch kitchen pending orders',
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });

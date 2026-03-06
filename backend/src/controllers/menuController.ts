@@ -27,6 +27,61 @@ const getCategoryOrder = (category?: string) => {
   return CATEGORY_ORDER[key] ?? 99;
 };
 
+const parseCsvLine = (line: string): string[] => {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    const next = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        current += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  result.push(current.trim());
+  return result;
+};
+
+const parseCsvData = (csvData: string) => {
+  const lines = String(csvData || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length < 2) {
+    return { headers: [], rows: [] as Record<string, string>[] };
+  }
+
+  const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase());
+  const rows = lines.slice(1).map((line) => {
+    const values = parseCsvLine(line);
+    const row: Record<string, string> = {};
+    headers.forEach((header, index) => {
+      row[header] = (values[index] || '').trim();
+    });
+    return row;
+  });
+
+  return { headers, rows };
+};
+
 // Get all menu items with filters and pagination
 export const getAllMenuItems = async (req: Request, res: Response) => {
   try {
@@ -549,6 +604,148 @@ export const toggleAvailability = async (req: authenticatedRequest, res: Respons
     res.status(500).json({
       status: 'ERROR',
       message: 'Failed to update availability',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+// Bulk upload/update menu data from CSV content
+export const bulkUploadMenuCsv = async (req: authenticatedRequest, res: Response) => {
+  try {
+    const { csvData } = req.body || {};
+    if (!csvData || typeof csvData !== 'string') {
+      return res.status(400).json({
+        status: 'VALIDATION_ERROR',
+        message: 'csvData is required and must be a string',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const { headers, rows } = parseCsvData(csvData);
+    const requiredHeaders = ['name', 'price', 'category'];
+    const missingHeaders = requiredHeaders.filter((header) => !headers.includes(header));
+
+    if (missingHeaders.length > 0) {
+      return res.status(400).json({
+        status: 'VALIDATION_ERROR',
+        message: `Missing CSV headers: ${missingHeaders.join(', ')}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+    const errors: Array<{ row: number; message: string }> = [];
+
+    for (let index = 0; index < rows.length; index += 1) {
+      const row = rows[index];
+      const rowNumber = index + 2; // +1 header row +1 one-based row number
+
+      const name = String(row.name || '').trim();
+      const category = String(row.category || '').trim().toUpperCase();
+      const price = Number(row.price);
+      const description = String(row.description || '').trim();
+      const image = String(row.image || row.imageurl || '').trim();
+      const prepTime = row.preptime ? Number(row.preptime) : 15;
+      const moodTags = normalizeStringArray(String(row.moodtags || '').split('|'));
+      const suitableFor = normalizeStringArray(String(row.suitablefor || '').split('|'));
+
+      if (!name || !category || !Number.isFinite(price)) {
+        skipped += 1;
+        errors.push({ row: rowNumber, message: 'name, category, and numeric price are required' });
+        continue;
+      }
+
+      try {
+        const existingItem = await prisma.menuItem.findFirst({
+          where: {
+            name,
+            category
+          }
+        });
+
+        if (existingItem) {
+          await prisma.menuItem.update({
+            where: { id: existingItem.id },
+            data: {
+              description,
+              price,
+              image,
+              prepTime: Number.isFinite(prepTime) && prepTime > 0 ? prepTime : 15,
+              moodTags,
+              suitableFor
+            }
+          });
+          updated += 1;
+        } else {
+          await prisma.menuItem.create({
+            data: {
+              name,
+              description,
+              price,
+              category,
+              image,
+              prepTime: Number.isFinite(prepTime) && prepTime > 0 ? prepTime : 15,
+              moodTags,
+              suitableFor
+            }
+          });
+          created += 1;
+        }
+      } catch {
+        const existingIndex = mockMenuItems.findIndex((item: any) => {
+          const itemName = String(item.name || '').toLowerCase();
+          const itemCategory = String(item.category || '').toUpperCase();
+          return itemName === name.toLowerCase() && itemCategory === category;
+        });
+
+        const normalizedItem = {
+          id: existingIndex >= 0 ? mockMenuItems[existingIndex].id : `mock-${Date.now()}-${index}`,
+          name,
+          description,
+          price,
+          category,
+          image,
+          moodTags,
+          suitableFor,
+          prepTime: Number.isFinite(prepTime) && prepTime > 0 ? prepTime : 15,
+          available: true,
+          isAvailable: true
+        };
+
+        if (existingIndex >= 0) {
+          mockMenuItems[existingIndex] = {
+            ...mockMenuItems[existingIndex],
+            ...normalizedItem
+          };
+          updated += 1;
+        } else {
+          mockMenuItems.unshift(normalizedItem);
+          created += 1;
+        }
+        persistMockMenuItems();
+      }
+    }
+
+    return res.status(200).json({
+      status: 'OK',
+      message: 'CSV menu bulk upload processed',
+      data: {
+        totalRows: rows.length,
+        created,
+        updated,
+        skipped,
+        errors
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error in CSV menu bulk upload:', error);
+    return res.status(500).json({
+      status: 'ERROR',
+      message: 'Failed to process CSV menu upload',
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });

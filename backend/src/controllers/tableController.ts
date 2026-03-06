@@ -417,3 +417,121 @@ export const getTablesByAmbiance = async (req: Request, res: Response) => {
     });
   }
 };
+
+// Get floor-plan friendly table data grouped by status
+export const getFloorPlan = async (req: Request, res: Response) => {
+  try {
+    const tables = await prisma.table.findMany({
+      orderBy: { tableNumber: 'asc' },
+      select: {
+        id: true,
+        tableNumber: true,
+        capacity: true,
+        location: true,
+        tableType: true,
+        status: true
+      }
+    });
+
+    const grouped = {
+      AVAILABLE: tables.filter((table) => table.status === 'AVAILABLE'),
+      RESERVED: tables.filter((table) => table.status === 'RESERVED'),
+      OCCUPIED: tables.filter((table) => table.status === 'OCCUPIED'),
+      MAINTENANCE: tables.filter((table) => table.status === 'MAINTENANCE')
+    };
+
+    return res.status(200).json({
+      status: 'OK',
+      message: 'Floor plan data retrieved successfully',
+      data: {
+        totalTables: tables.length,
+        summary: {
+          available: grouped.AVAILABLE.length,
+          reserved: grouped.RESERVED.length,
+          occupied: grouped.OCCUPIED.length,
+          maintenance: grouped.MAINTENANCE.length
+        },
+        tables,
+        grouped
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching floor plan:', error);
+    return res.status(500).json({
+      status: 'ERROR',
+      message: 'Failed to fetch floor plan',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+// Predict which occupied tables are likely to clear soon
+export const getTableClearanceForecast = async (req: Request, res: Response) => {
+  try {
+    const averageDiningMinutes = req.query.averageDiningMinutes
+      ? Number(req.query.averageDiningMinutes)
+      : 90;
+
+    const occupiedTables = await prisma.table.findMany({
+      where: {
+        status: { in: ['OCCUPIED', 'RESERVED'] }
+      },
+      include: {
+        reservations: {
+          where: {
+            status: { in: ['CONFIRMED', 'COMPLETED'] }
+          },
+          orderBy: {
+            updatedAt: 'desc'
+          },
+          take: 1
+        }
+      },
+      orderBy: { tableNumber: 'asc' }
+    });
+
+    const now = Date.now();
+    const forecast = occupiedTables.map((table) => {
+      const latestReservation = table.reservations[0];
+      const referenceTime = latestReservation
+        ? new Date(latestReservation.updatedAt).getTime()
+        : now;
+
+      const estimatedClearAt = new Date(referenceTime + averageDiningMinutes * 60000);
+      const minutesToClear = Math.max(0, Math.ceil((estimatedClearAt.getTime() - now) / 60000));
+
+      return {
+        id: table.id,
+        tableNumber: table.tableNumber,
+        status: table.status,
+        capacity: table.capacity,
+        location: table.location,
+        estimatedClearAt,
+        estimatedMinutesToClear: minutesToClear
+      };
+    });
+
+    forecast.sort((a, b) => a.estimatedMinutesToClear - b.estimatedMinutesToClear);
+
+    return res.status(200).json({
+      status: 'OK',
+      message: 'Table clearance forecast generated successfully',
+      data: {
+        averageDiningMinutes,
+        forecastCount: forecast.length,
+        forecast
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error generating table clearance forecast:', error);
+    return res.status(500).json({
+      status: 'ERROR',
+      message: 'Failed to generate table clearance forecast',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
+};

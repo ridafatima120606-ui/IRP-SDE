@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { body, validationResult } from 'express-validator';
+import { body, query, validationResult } from 'express-validator';
 import {
   createReservation,
   getUserReservations,
@@ -7,7 +7,8 @@ import {
   cancelReservation,
   checkInReservation,
   getAvailableSlots,
-  modifyReservation
+  modifyReservation,
+  getDailyReservationLog
 } from '../controllers/reservationController';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -32,8 +33,6 @@ const handleValidationErrors = (req: any, res: any, next: any) => {
 
 // Public routes
 router.get('/slots/available', getAvailableSlots);
-
-router.get('/:id', getReservationById);
 
 // Protected routes (Authenticated users)
 router.post(
@@ -89,6 +88,15 @@ router.post(
 );
 
 // Admin-only routes
+router.get(
+  '/logs/daily',
+  authenticate,
+  authorize(['ADMIN']),
+  [query('date').optional().isISO8601().withMessage('date must be YYYY-MM-DD')],
+  handleValidationErrors,
+  getDailyReservationLog
+);
+
 router.put(
   '/:id',
   authenticate,
@@ -110,5 +118,7 @@ router.put(
   handleValidationErrors,
   modifyReservation
 );
+
+router.get('/:id', getReservationById);
 
 export default router;
